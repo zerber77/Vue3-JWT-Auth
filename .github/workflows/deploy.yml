@@ -1,0 +1,36 @@
+name: regru
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get repo
+        uses: actions/checkout@v3
+      - name: Cache deps
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: node-modules-${{ hashFiles('**/package-lock.json') }}
+      - name: Install deps
+        run: npm ci
+      - name: Build app
+        run: npm run build
+      - name: Copy api
+        run: sudo cp -rf /home/runner/work/Vue3-JWT-Auth/Vue3-JWT-Auth/api /home/runner/work/Vue3-JWT-Auth/Vue3-JWT-Auth/dist/spa/
+      - name: mkdir src
+        run: sudo mkdir /home/runner/work/Vue3-JWT-Auth/Vue3-JWT-Auth/dist/spa/src
+      - name: mkdir assets
+        run: sudo mkdir /home/runner/work/Vue3-JWT-Auth/Vue3-JWT-Auth/dist/spa/src/assets
+      - name: mkdir images
+        run: sudo mkdir /home/runner/work/Vue3-JWT-Auth/Vue3-JWT-Auth/dist/spa/src/assets/images
+      - name: Copy images
+        run: sudo cp -rf /home/runner/work/Vue3-JWT-Auth/Vue3-JWT-Auth/src/assets/images /home/runner/work/Vue3-JWT-Auth/Vue3-JWT-Auth/dist/spa/src/assets/
+      - name: Copy folder content recursively to remote
+        uses: garygrossgarten/github-action-scp@release
+        with:
+          local: /home/runner/work/quasar-test/Vue3-JWT-Auth/dist/spa
+          remote: www/xn---57-qdd4aqo.xn--p1ai/vue3-auth
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.PASSWORD }}
+

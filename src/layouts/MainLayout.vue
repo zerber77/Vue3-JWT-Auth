@@ -94,10 +94,10 @@ const linksList = [
   },
   {
     id:1,
-    title: 'Admin Panel',
+    title: 'Users',
     caption: '',
-    icon: 'today',
-    link: '/PanelPage/',
+    icon: 'group',
+    link: '/UsersPage/',
     roles: ['admin']
   },
   

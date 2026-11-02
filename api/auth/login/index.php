@@ -1,9 +1,11 @@
 <?php
-header('Access-Control-Allow-Origin: http://localhost:9000');
-header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header('Content-Type: application/json; charset=utf-8');
 
+// CORS
+require_once(__DIR__ . './../../cors.php');
+
+// DB connection
+require_once(__DIR__ . './../../Database.php');
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -11,7 +13,7 @@ use Ramsey\UUID\Uuid;
 
 require("../Firebase/JWT.php");
 require("../Firebase/Key.php");
-// DB connection
+
 include("../../const.php");
 
 $options = [
@@ -19,10 +21,14 @@ $options = [
   PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 ];
 
+
 try {
-  $pdo = new PDO("mysql:host=$db; dbname=$dbname; charset=utf8mb4", $dbuser, $dbpasswd, $options);
+    $database = Database::getInstance();
+    $pdo = $database->getConnection();
 } catch (\PDOException $e) {
-  throw new \PDOException($e->getMessage(), (int)$e->getCode());
+    http_response_code(500);
+    echo json_encode(['error' => 'Error DB connection']);
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -50,17 +56,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $user = $stmt->fetch();
 
   if (!$user || !password_verify($plainPassword, $user['password'])) {
-//    http_response_code(401); // Unauthorized
+    http_response_code(401); // Unauthorized
     echo json_encode(['error' => 'Uncorrect login / password or you is unregistered']);
     exit;
   }
+  ////last_visit
+  $stmt = $pdo->prepare("UPDATE users SET last_visit = CURRENT_TIMESTAMP WHERE id = :id");
+  $stmt->execute(['id' => $user['id']]);
 
     // Генерируем JWT токен
   $payload = [
     "iss" => "http://mysite.org",
     "aud" => "http://mysite.com",
     "iat" => time(),
-    "exp" => time() + 5,
+    "exp" => time() + 3600,
     "data" => [
       "id" => $user['id'],
       "login" => $login,
