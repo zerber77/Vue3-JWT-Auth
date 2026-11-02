@@ -28,7 +28,7 @@ jobs:
       - name: Copy folder content recursively to remote
         uses: garygrossgarten/github-action-scp@release
         with:
-          local: /home/runner/work/quasar-test/Vue3-JWT-Auth/dist/spa
+          local: /home/runner/work/Vue3-JWT-Auth/Vue3-JWT-Auth/dist/spa
           remote: www/xn---57-qdd4aqo.xn--p1ai/vue3-auth
           host: ${{ secrets.HOST }}
           username: ${{ secrets.SSH_USER }}
