@@ -59,10 +59,10 @@ module.exports = configure(function (/* ctx */) {
       // vueOptionsAPI: false,
       // rebuildCache: true, // rebuilds Vite/linter/etc cache on startup
 
-      // extendViteConf (viteConf, { isClient, isServer }) {
-      //   viteConf.base = '/spa/'; // <=== add this line
-      // },
-      //publicPath: '/spa/',
+      extendViteConf (viteConf, { isClient, isServer }) {
+        viteConf.base = '/vue3-auth/'; // <=== add this line
+      },
+      publicPath: '/vue3-auth/',
       // analyze: true,
       // env: {},
       // rawDefine: {}
