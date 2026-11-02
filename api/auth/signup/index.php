@@ -4,7 +4,6 @@ header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
