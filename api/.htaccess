@@ -1,3 +1,7 @@
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+RequestHeader set Authorization "%{HTTP_AUTHORIZATION}e"
 <Files ".env">
     Order allow,deny
     Deny from all

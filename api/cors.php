@@ -10,6 +10,8 @@ $allowedOrigins = [
     'http://localhost:5174',
     'http://localhost:3000',
     'http://localhost:9000',
+    'http://vue3-jwt-auth/',
+    'http://vue3-jwt-auth/api/auth/login/',
     // Добавьте здесь другие разрешенные домены для продакшена
     // getenv('FRONTEND_URL') ?: null, // Если используете переменные окружения
 ];
