@@ -7,6 +7,11 @@
     v-model = "help"
     :helpMessage = "helpMessage"
   />
+  <ConfirmMessageComponent
+    v-model = "confirm"
+    :confirmMessage
+    @delete=onDeleteUser()
+  />
     <div>
         <div 
             v-if="isAdmin"
@@ -77,6 +82,7 @@ import { useAuthStore } from 'stores/auth'
 import useMessageVars from "components/modules/messages/getMessageVars";
 import ErrorMessageComponent from "components/Modals/ErrorMessageComponent.vue";
 import HelpMessageComponent from "components/Modals/HelpMessageComponent.vue";
+import ConfirmMessageComponent from "components/Modals/ConfirmMessageComponent.vue";
 
 import getUsers from "src/components/modules/admin/getUsers";
 import { patchUser } from "src/components/modules/admin/patchUser";
@@ -91,6 +97,9 @@ const ROLES = {
 const authStore = useAuthStore()  
 const authorised = computed(()=> authStore.getTokenData())
 const {help, error, helpMessage, errorMessage, setHelpMessage, setErrorMessage, clearMessages} = useMessageVars()
+const confirm = ref(false)
+const confirmMessage= ref("")
+
 
 const isAdmin = computed(() => authorised.value?.role === ROLES.ADMIN)
 
@@ -140,26 +149,34 @@ const changeUserRole = async (row, newRole) => {
   
 }
 
-const deleteUser = async(row) => {
-        try{
-          const response = await deleteUserById( {id:row.id})
-          const err = response.data.value?.error;
-          if (err) {
-            setErrorMessage(err.message || err || 'Server error, try again later');
-            return;
-          }
-          if(response.data.value.message){
-            setHelpMessage(response.data.value.message)
-            fetchUsers()
+let selectedRowId = null
+
+const deleteUser = (row) => {
+        selectedRowId=row.id
+        confirmMessage.value ="Are you sure want do remove "+ row.name + "?"
+        confirm.value = true    
+}
+
+const onDeleteUser= async()=>{
+  debugger
+    try{
+      const response = await deleteUserById( {id:selectedRowId})
+      const err = response.data.value?.error;
+      if (err) {
+        setErrorMessage(err.message || err || 'Server error, try again later');
+        return;
+      }
+      if(response.data.value.message){
+        setHelpMessage(response.data.value.message)
+        fetchUsers()
             ///another faster way
             ///rows.value = rows.value.filter(user => user.id !== row.id)
-          }
+        }
         }catch (e) {
               console.error('Failed to delete user:', e)
               setErrorMessage('Failed to delete user')
-          }  
+        }  
 }
-    
 
 </script>
 
