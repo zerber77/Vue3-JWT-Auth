@@ -1,208 +1,225 @@
 <template>
   <ErrorMessageComponent
-    v-model = "error"
-    :errorMessage = "errorMessage"
+    v-model="error"
+    :errorMessage="errorMessage"
   />
   <HelpMessageComponent
-    v-model = "help"
-    :helpMessage = "helpMessage"
+    v-model="help"
+    :helpMessage="helpMessage"
   />
   <ConfirmMessageComponent
-    v-model = "confirm"
-    :confirmMessage
-    @delete=onDeleteUser
+    v-model="confirm"
+    :confirmMessage="confirmMessage"
+    @delete="onDeleteUser"
   />
-    <div>
-        <div 
-            v-if="isAdmin"
-            class="q-ma-md"
-        >
-    <q-table
-      class="modern-users-table"
-      flat
-      title="Пользователи"
-      :rows="rows"
-      :columns="columns"
-      row-key="id"
-      :rows-per-page-options="[10, 20, 50]"
-      :pagination="{ rowsPerPage: 10 }"
-  >
-    <!-- Кастомный заголовок таблицы -->
-    <template v-slot:top>
-      <div class="table-header">
-        <div class="table-title-wrapper">
-          <div class="table-icon">
-            <q-icon name="group" size="24px" color="white" />
+  
+  <div>
+    <div v-if="isAdmin" class="q-ma-md">
+      <q-table
+        class="modern-users-table my-sticky-column-table"
+        flat
+        title="Пользователи"
+        :rows="filteredRows" 
+        :columns="columns"
+        row-key="id"
+        :rows-per-page-options="[10, 20, 50]"
+        :pagination="{ rowsPerPage: 10 }"
+      >
+        <!-- Кастомный заголовок таблицы с интегрированным фильтром -->
+        <template v-slot:top>
+          <div class="table-header">
+            <div class="table-title-wrapper">
+              <div class="table-icon">
+                <q-icon name="group" size="24px" color="white" />
+              </div>
+              <div class="table-title-content">
+                <div class="text-h6 text-weight-bold">Пользователи</div>
+                <div class="text-caption text-grey-6">Управление пользователями системы</div>
+              </div>
+            </div>
           </div>
-          <div class="table-title-content">
-            <div class="text-h6 text-weight-bold">Пользователи</div>
-            <div class="text-caption text-grey-6">Управление пользователями системы</div>
-          </div>
-        </div>
-      </div>
-    </template>
+          
+          <!-- ВСТАВКА КОМПОНЕНТА ФИЛЬТРА -->
+          <FiltersComponent 
+            v-model="filterValue" 
+            v-model:filterField="filterField" 
+            :columns="columns" 
+          />
+        </template>
 
-    <!-- Кастомные ячейки действий -->
-    <template v-slot:body-cell-actions="props">
-      <q-td :props="props" class="actions-cell">
-        <div class="actions-wrapper">
-          <!-- Если пользователь админ - показываем кнопку "Сделать пользователем" -->
-          <q-btn
-            v-if="props.row.role === ROLES.ADMIN"
-            unelevated
-            round
-            dense
-            color="warning"
-            icon="person"
-            class="action-btn action-btn-warning"
-            @click="changeUserRole(props.row, ROLES.USER)"
-          >
-            <q-tooltip>Сделать пользователем</q-tooltip>
-          </q-btn>
-          
-          <!-- Если пользователь не админ - показываем кнопку "Сделать админом" -->
-          <q-btn
-            v-else
-            unelevated
-            round
-            dense
-            color="primary"
-            icon="admin_panel_settings"
-            class="action-btn action-btn-primary"
-            @click="changeUserRole(props.row, ROLES.ADMIN)"
-          >
-            <q-tooltip>Сделать админом</q-tooltip>
-          </q-btn>
-          
-          <q-btn
-            unelevated
-            round
-            dense
-            color="red-6"
-            icon="delete"
-            class="action-btn action-btn-delete"
-            @click="deleteUser(props.row)"
-          >
-            <q-tooltip>Удалить</q-tooltip>
-          </q-btn>
-        </div>
-      </q-td>
-    </template>
-  </q-table>
-        </div>
-        <div v-else>
-            {{ `What are you doing here?`  }}
-        </div>
+        <!-- Кастомные ячейки действий -->
+        <template v-slot:body-cell-actions="props">
+          <q-td :props="props" class="actions-cell">
+            <div class="actions-wrapper">
+              <q-btn
+                v-if="props.row.role === ROLES.ADMIN"
+                unelevated
+                round
+                dense
+                color="warning"
+                icon="person"
+                class="action-btn action-btn-warning"
+                @click="changeUserRole(props.row, ROLES.USER)"
+              >
+                <q-tooltip>Сделать пользователем</q-tooltip>
+              </q-btn>
+              
+              <q-btn
+                v-else
+                unelevated
+                round
+                dense
+                color="primary"
+                icon="admin_panel_settings"
+                class="action-btn action-btn-primary"
+                @click="changeUserRole(props.row, ROLES.ADMIN)"
+              >
+                <q-tooltip>Сделать админом</q-tooltip>
+              </q-btn>
+              
+              <q-btn
+                unelevated
+                round
+                dense
+                color="red-6"
+                icon="delete"
+                class="action-btn action-btn-delete"
+                @click="deleteUser(props.row)"
+              >
+                <q-tooltip>Удалить</q-tooltip>
+              </q-btn>
+            </div>
+          </q-td>
+        </template>
+      </q-table>
     </div>
-    <!-- <pre>{{ authorised }}</pre> -->
+    <div v-else>
+      {{ `What are you doing here?` }}
+    </div>
+  </div>
 </template>
 
 <script setup>
-import {computed, onMounted, ref} from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useAuthStore } from 'stores/auth'
 import useMessageVars from "components/modules/messages/getMessageVars";
 import ErrorMessageComponent from "components/Modals/ErrorMessageComponent.vue";
 import HelpMessageComponent from "components/Modals/HelpMessageComponent.vue";
 import ConfirmMessageComponent from "components/Modals/ConfirmMessageComponent.vue";
 
+import FiltersComponent from "src/components/admin/FiltersComponent.vue";
+
 import getUsers from "src/components/modules/admin/getUsers";
 import { patchUser } from "src/components/modules/admin/patchUser";
 import { deleteUserById } from "src/components/modules/admin/deleteUserById";
 
 const ROLES = {
-    ADMIN: 'admin',
-    USER: 'user',
-    // MODERATOR: 'moderator',
+  ADMIN: 'admin',
+  USER: 'user',
 }
 
 const authStore = useAuthStore()  
-const authorised = computed(()=> authStore.getTokenData())
-const {help, error, helpMessage, errorMessage, setHelpMessage, setErrorMessage, clearMessages} = useMessageVars()
+const authorised = computed(() => authStore.getTokenData())
+const { help, error, helpMessage, errorMessage, setHelpMessage, setErrorMessage } = useMessageVars()
 const confirm = ref(false)
-const confirmMessage= ref("")
-
+const confirmMessage = ref("")
 
 const isAdmin = computed(() => authorised.value?.role === ROLES.ADMIN)
 
 const columns = [
-{name: 'id',required: true,label: 'ID',align: 'center',field: 'id',sortable: true},
-{name: 'login',align: 'center',label: 'login',field: 'login',sortable: true},
-{name: 'name', label: 'name', field: 'name', sortable: true },
-{name: 'email', label: 'email', field: 'email', sortable: true },
-{name: 'signed', label: 'signed', field: 'signed', sortable: true },
-{name: 'last_visit', label: 'last visit', field: 'last_visit',sortable: true },
-{name: 'role', label: 'role', field: 'role', sortable: true },
-{name: 'actions', label: 'Actions', field: 'actions', align: 'center'}
+  { name: 'id', required: true, label: 'ID', align: 'center', field: 'id', sortable: true },
+  { name: 'login', align: 'center', label: 'login', field: 'login', sortable: true },
+  { name: 'name', label: 'name', field: 'name', sortable: true },
+  { name: 'email', label: 'email', field: 'email', sortable: true },
+  { name: 'signed', label: 'signed', field: 'signed', sortable: true },
+  { name: 'last_visit', label: 'last visit', field: 'last_visit', sortable: true },
+  { name: 'role', label: 'role', field: 'role', sortable: true },
+  { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }
 ]
 
 let rows = ref([])
-async function  fetchUsers() {
-  try{
-    const {response} = await getUsers()
-    rows.value = response?.value
-  }catch (e) {
+
+// === НОВОЕ: Переменные для фильтрации ===
+const filterField = ref('login') // Поле по умолчанию для поиска
+const filterValue = ref('')
+
+// === НОВОЕ: Вычисляемое свойство для мгновенной фильтрации ===
+const filteredRows = computed(() => {
+  if (!filterValue.value.trim()) {
+    return rows.value
+  }
+  
+  const searchLower = filterValue.value.toLowerCase()
+  
+  return rows.value.filter(row => {
+    const cellValue = row[filterField.value]
+    if (cellValue === undefined || cellValue === null) return false
+    return String(cellValue).toLowerCase().includes(searchLower)
+  })
+})
+
+async function fetchUsers() {
+  try {
+    const { response } = await getUsers()
+    rows.value = response?.value || []
+  } catch (e) {
     console.error('Failed to get users:', e)
     setErrorMessage('Failed to get users')
   }
-  
 }
-onMounted( ()=>{
+
+onMounted(() => {
   fetchUsers()
 })
 
 const changeUserRole = async (row, newRole) => {
-  try{
-    const response = await patchUser( {id:row.id, role: newRole })
+  try {
+    const response = await patchUser({ id: row.id, role: newRole })
     const err = response.data.value?.error;
     if (err) {
       setErrorMessage(err.message || err || 'Server error, try again later');
       return;
     }
 
-    if(response.data.value.message){
+    if (response.data.value.message) {
       setHelpMessage(response.data.value.message)
       row.role = newRole
     }
-  }catch (e) {
-        console.error('Failed to update user:', e)
-        setErrorMessage('Failed to update user')
-    }
-  
+  } catch (e) {
+    console.error('Failed to update user:', e)
+    setErrorMessage('Failed to update user')
+  }
 }
 
 let selectedRowId = null
 
 const deleteUser = (row) => {
-        selectedRowId=row.id
-        confirmMessage.value ="Are you sure want do remove "+ row.name + "?"
-        confirm.value = true    
+  selectedRowId = row.id
+  confirmMessage.value = "Are you sure want do remove " + row.name + "?"
+  confirm.value = true    
 }
 
-const onDeleteUser= async()=>{
-  if(!selectedRowId)return
-  try{
-      const response = await deleteUserById( {id:selectedRowId})
-      const err = response.data.value?.error;
-      if (err) {
-        setErrorMessage(err.message || err || 'Server error, try again later');
-        return;
-      }
-      if(response.data.value.message){
-        setHelpMessage(response.data.value.message)
-        fetchUsers()
-            ///another faster way
-            ///rows.value = rows.value.filter(user => user.id !== row.id)
-      }
-  }catch (e) {
-      console.error('Failed to delete user:', e)
-      setErrorMessage('Failed to delete user')
+const onDeleteUser = async () => {
+  if (!selectedRowId) return
+  try {
+    const response = await deleteUserById({ id: selectedRowId })
+    const err = response.data.value?.error;
+    if (err) {
+      setErrorMessage(err.message || err || 'Server error, try again later');
+      return;
+    }
+    if (response.data.value.message) {
+      setHelpMessage(response.data.value.message)
+      fetchUsers()
+    }
+  } catch (e) {
+    console.error('Failed to delete user:', e)
+    setErrorMessage('Failed to delete user')
   }  
 }
-
 </script>
 
 <style scoped>
-/* Основные стили таблицы */
 .modern-users-table {
   border-radius: 20px !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08) !important;
@@ -210,7 +227,6 @@ const onDeleteUser= async()=>{
   background: white;
 }
 
-/* Заголовок таблицы */
 .table-header {
   display: flex;
   align-items: center;
@@ -244,7 +260,6 @@ const onDeleteUser= async()=>{
   gap: 4px;
 }
 
-/* Стилизация заголовков колонок */
 :deep(.q-table th) {
   background: #f8f9fa !important;
   font-weight: 600 !important;
@@ -256,14 +271,23 @@ const onDeleteUser= async()=>{
   border-bottom: 2px solid rgba(0, 0, 0, 0.06) !important;
 }
 
-/* Стилизация строк */
 :deep(.q-table tbody tr) {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :deep(.q-table tbody tr:hover) {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.04) 0%, rgba(118, 75, 162, 0.04) 100%) !important;
-  transform: scale(1.005);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.06) 0%, rgba(118, 75, 162, 0.06) 100%) !important;
+  /* Можно добавить легкую тень вместо увеличения масштаба, если хочется "приподнять" строку: */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.q-table th),
+:deep(.q-table td) {
+  box-sizing: border-box !important;
+}
+
+:deep(.q-table tbody tr.selected) {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%) !important;
 }
 
 :deep(.q-table tbody tr:hover td) {
@@ -277,7 +301,6 @@ const onDeleteUser= async()=>{
   color: #495057;
 }
 
-/* Ячейка с действиями */
 .actions-cell {
   text-align: center;
 }
@@ -289,7 +312,6 @@ const onDeleteUser= async()=>{
   gap: 8px;
 }
 
-/* Кнопки действий */
 .action-btn {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -326,7 +348,6 @@ const onDeleteUser= async()=>{
   box-shadow: 0 6px 20px rgba(213, 0, 0, 0.45) !important;
 }
 
-/* Пагинация */
 :deep(.q-table__bottom) {
   border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
   padding: 16px 24px !important;
@@ -340,7 +361,6 @@ const onDeleteUser= async()=>{
   font-size: 13px !important;
 }
 
-/* === Темная тема === */
 body.body--dark .modern-users-table {
   background: #1e1e24;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
@@ -375,7 +395,27 @@ body.body--dark :deep(.q-table__bottom) {
   border-top-color: rgba(255, 255, 255, 0.06) !important;
 }
 
-/* Мобильная адаптация */
+/* block first column/////////////////////////////////////*/
+/* :deep(.my-sticky-column-table) {
+  max-width: 1600px;
+} */
+
+:deep(.my-sticky-column-table thead tr:first-child th:first-child) {
+  background-color: #c7c9ca;
+}
+
+:deep(.my-sticky-column-table tbody:not(.q-virtual-scroll__padding) td:first-child) {
+  background-color: #c7c9ca;
+}
+
+:deep(.my-sticky-column-table th:first-child),
+:deep(.my-sticky-column-table tbody:not(.q-virtual-scroll__padding) td:first-child) {
+  position: sticky;
+  left: 0;
+  z-index: 1000;
+  box-shadow: 0 -1px 0 #606263;
+}
+
 @media (max-width: 768px) {
   .table-header {
     flex-direction: column;
