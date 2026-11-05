@@ -14,14 +14,14 @@
   />
   
   <div>
-    <div v-if="isAdmin" class="q-ma-md">
+    <div v-if="isAdmin || isEditor" class="q-ma-md">
       <q-table
         class="modern-users-table my-sticky-column-table"
         flat
         title="Пользователи"
         :rows="filteredRows" 
         :columns="columns"
-        row-key="id"
+        row-key="id"    
         :rows-per-page-options="[10, 20, 50]"
         :pagination="{ rowsPerPage: 10 }"
       >
@@ -52,32 +52,47 @@
           <q-td :props="props" class="actions-cell">
             <div class="actions-wrapper">
               <q-btn
-                v-if="props.row.role === ROLES.ADMIN"
+                v-if="props.row.role === ROLES.ADMIN && isAdmin"
                 unelevated
                 round
                 dense
-                color="warning"
+                color="red"
                 icon="person"
                 class="action-btn action-btn-warning"
                 @click="changeUserRole(props.row, ROLES.USER)"
               >
                 <q-tooltip>Сделать пользователем</q-tooltip>
               </q-btn>
+
+              <q-btn
+                v-else-if="props.row.role === ROLES.EDITOR"
+                unelevated
+                round
+                dense
+                color="warning"
+                icon="edit"
+                class="action-btn action-btn-warning"
+                @click="isAdmin ? changeUserRole(props.row, ROLES.ADMIN) : changeUserRole(props.row, ROLES.USER)"
+              >
+                <q-tooltip v-if="isAdmin">Сделать админом</q-tooltip>
+                <q-tooltip v-else>Сделать пользователем</q-tooltip>
+              </q-btn>
               
               <q-btn
-                v-else
+                v-else-if="props.row.role === ROLES.USER"
                 unelevated
                 round
                 dense
                 color="primary"
                 icon="admin_panel_settings"
                 class="action-btn action-btn-primary"
-                @click="changeUserRole(props.row, ROLES.ADMIN)"
+                @click="changeUserRole(props.row, ROLES.EDITOR)"
               >
-                <q-tooltip>Сделать админом</q-tooltip>
+                <q-tooltip>Сделать редактором</q-tooltip>
               </q-btn>
               
               <q-btn
+                v-if="props.row.role !== ROLES.ADMIN || (props.row.role === ROLES.ADMIN && isAdmin)"
                 unelevated
                 round
                 dense
@@ -106,7 +121,6 @@ import useMessageVars from "components/modules/messages/getMessageVars";
 import ErrorMessageComponent from "components/Modals/ErrorMessageComponent.vue";
 import HelpMessageComponent from "components/Modals/HelpMessageComponent.vue";
 import ConfirmMessageComponent from "components/Modals/ConfirmMessageComponent.vue";
-
 import FiltersComponent from "src/components/admin/FiltersComponent.vue";
 
 import getUsers from "src/components/modules/admin/getUsers";
@@ -115,6 +129,7 @@ import { deleteUserById } from "src/components/modules/admin/deleteUserById";
 
 const ROLES = {
   ADMIN: 'admin',
+  EDITOR:'editor',
   USER: 'user',
 }
 
@@ -125,6 +140,8 @@ const confirm = ref(false)
 const confirmMessage = ref("")
 
 const isAdmin = computed(() => authorised.value?.role === ROLES.ADMIN)
+const isEditor = computed(() => authorised.value?.role === ROLES.EDITOR)
+
 
 const columns = [
   { name: 'id', required: true, label: 'ID', align: 'center', field: 'id', sortable: true },
@@ -143,7 +160,7 @@ let rows = ref([])
 const filterField = ref('login') // Поле по умолчанию для поиска
 const filterValue = ref('')
 
-// === НОВОЕ: Вычисляемое свойство для мгновенной фильтрации ===
+// =Вычисляемое свойство для мгновенной фильтрации 
 const filteredRows = computed(() => {
   if (!filterValue.value.trim()) {
     return rows.value
@@ -162,6 +179,7 @@ async function fetchUsers() {
   try {
     const { response } = await getUsers()
     rows.value = response?.value || []
+//    if (authorised.value?.role === ROLES.EDITOR) rows.value = rows.value.filter(item => item.role !== ROLES.ADMIN)
   } catch (e) {
     console.error('Failed to get users:', e)
     setErrorMessage('Failed to get users')
@@ -171,6 +189,7 @@ async function fetchUsers() {
 onMounted(() => {
   fetchUsers()
 })
+
 
 const changeUserRole = async (row, newRole) => {
   try {

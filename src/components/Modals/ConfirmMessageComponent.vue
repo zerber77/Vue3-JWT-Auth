@@ -19,7 +19,7 @@
             <div class="text-h6 text-weight-bold text-grey-9 dialog-title">
             Подтвердите удаление
             </div>
-            <p class="text-body2 text-grey-6 q-mt-sm q-mb-none dialog-text">
+            <p class="text-body1 text-grey-9 q-mt-sm q-mb-none dialog-text">
             {{ props.confirmMessage || 'Вы уверены, что хотите удалить этот элемент? Это действие нельзя отменить.' }}
             </p>
         </q-card-section>
@@ -29,7 +29,6 @@
             <q-btn
             flat
             label="Отмена"
-            color="grey-7"
             class="btn-custom btn-cancel"
             v-close-popup
             no-caps
@@ -107,11 +106,12 @@ const confirm = computed({
 }
 
 .btn-cancel {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgb(144, 235, 144);
 }
 
 .btn-cancel:hover {
-  background-color: rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-2px);
+  background-color: rgb(131, 238, 131) !important;
 }
 
 .btn-delete {

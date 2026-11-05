@@ -37,6 +37,7 @@
               <q-icon name="person" color="white" size="18px" />
             </q-avatar>
             <span class="user-name q-mx-sm">{{ userData?.login }}</span>
+            <span class="user-name q-mx-sm">{{ userData?.role }}</span>
             <q-btn 
               flat 
               round 
@@ -113,7 +114,7 @@ const linksList = [
     caption: '',
     icon: 'person',
     link: '/CategoriesPage/',
-    roles: ['user']
+    roles: ['user','editor']
   },
   {
     id: 1,
@@ -121,7 +122,7 @@ const linksList = [
     caption: '',
     icon: 'group',
     link: '/UsersPage/',
-    roles: ['admin']
+    roles: ['admin','editor']
   },
   {
     id: 2,
@@ -129,7 +130,7 @@ const linksList = [
     caption: '',
     icon: 'star',
     link: '/',
-    roles: ['user', 'admin']
+    roles: ['user', 'admin','editor']
   },
 ]
 
